@@ -18,13 +18,14 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
 
     private static final String[] WHITE_LIST = {
-            "/",
-            "/**"
+            "/api/login",
+            "/api/main"
     };
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .httpBasic(basic -> basic.disable())
                 .csrf(csrf -> csrf.disable())
                 .headers(headers -> headers
                         .frameOptions((frameOptionsConfig -> frameOptionsConfig.disable()))
@@ -35,8 +36,8 @@ public class SecurityConfig {
                                         .requestMatchers(WHITE_LIST)
                                         .permitAll()// 전체권한
                                         .requestMatchers(PathRequest.toH2Console()).permitAll()
-                                        .requestMatchers("/api/v1/**")
-                                        .hasRole(Role.USER.name()); // USER 만
+                                        .requestMatchers("/api/admin")
+                                        .hasRole(Role.ADMIN.name()); // GEUST 만
 //                                        .anyRequest()
 //                                        .authenticated(); // 나머지는 모두 인증된 사용자들에게만 허용
                             } catch (Exception e) {
@@ -45,29 +46,13 @@ public class SecurityConfig {
                         }
                 )
                 .logout(httpSecurityLogoutConfigurer -> httpSecurityLogoutConfigurer
-                        .logoutSuccessUrl("/") // 로그아웃 성공 시 "/" 로 이동
+                        .logoutSuccessUrl("/api/") // 로그아웃 성공 시 "/" 로 이동
                 )
                 .oauth2Login(oauth2 -> oauth2 
                         .userInfoEndpoint(userInfoEndpointConfig -> userInfoEndpointConfig // 로그인 성공 이후 사용자 정보 가져올 때의 설정
                                 .userService(customOAuth2UserService) // 소셜 로그인 성공 시 후속조치 할 서비스 구현체 명시
                         )
                 );
-//                .csrf().disable()
-//                .headers().frameOptions().disable() // H2 Console쓰려고
-//                .and()
-//                .authorizeHttpRequests()
-//                .requestMatchers("/", "/css/**", "/images/**","/js/**", "/h20console/**")
-//                .permitAll()
-//                .requestMatchers("/api/v1/**")
-//                .hasRole(Role.USER.name())
-//                .anyRequest().authenticated()
-//                .and()
-//                .logout()
-//                .logoutSuccessUrl("/")
-//                .and()
-//                .oauth2Login()
-//                .userInfoEndpoint()
-//                .userService();
 
         return http.build();
     }

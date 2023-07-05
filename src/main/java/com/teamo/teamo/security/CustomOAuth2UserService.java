@@ -31,7 +31,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
      */
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        log.info("loadUser 입문");
+        log.info("userRequest.accessToken = {}", userRequest.getAccessToken());
         OAuth2UserService<OAuth2UserRequest, OAuth2User> delegate = new DefaultOAuth2UserService();
         OAuth2User oAuth2User = delegate.loadUser(userRequest);
 
@@ -40,7 +40,9 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 .getProviderDetails()
                 .getUserInfoEndpoint()
                 .getUserNameAttributeName();
-        OAuthAttributes attributes = OAuthAttributes.of(
+        log.info("registrationId = {}, userNameAttributeName={}", registrationId, userNameAttributeName);
+
+        OAuthAttributes attributes = OAuthAttributes.of( // Oauth2UserService를 통해 가져온 필요한 정보를 하나로 담기 위한 객체
                 registrationId,
                 userNameAttributeName,
                 oAuth2User.getAttributes()
@@ -60,7 +62,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     private User saveOrUpdate(OAuthAttributes attributes) {
         User user = userRepository.findByEmail(attributes.getEmail())
                 .map(entity -> entity.update(attributes.getName()))
-                .orElse(attributes.toEntity());
+                .orElse(attributes.toEntity()); // 없으면 User 생성
 
         return userRepository.save(user);
     }
