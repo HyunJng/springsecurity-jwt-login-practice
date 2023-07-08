@@ -20,8 +20,13 @@ public class User {
 
     private String email;
 
+    private String password;
+
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    private String provider;
+    private String provider_id;
 
     public String getRoleKey() {
         return role.getKey();

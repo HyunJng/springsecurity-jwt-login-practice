@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum Role {
 
-    GEUST("ROLE_GUEST", "손님"), // SpringSecurity는 권한의 앞에 ROLE이 붙어있어야한다.
+    ADMIN("ROLE_ADMIN", "관리자"), // SpringSecurity는 권한의 앞에 ROLE이 붙어있어야한다.
     USER("ROLE_USER", "일반사용자");
 
     private final String key;
