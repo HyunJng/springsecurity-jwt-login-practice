@@ -1,13 +1,16 @@
 package com.teamo.teamo.security;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import com.teamo.teamo.service.MyUserDetailsService;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -16,8 +19,11 @@ import java.util.Date;
 
 @Slf4j
 @Getter
+@RequiredArgsConstructor
 @Component
 public class JwtTokenProvider {
+
+    private final MyUserDetailsService myUserDetailsService;
 
     @Value("${jwt.token.key}")
     private String secretKey;
@@ -31,10 +37,10 @@ public class JwtTokenProvider {
     }
 
     // JWT 생성
-    public String createAccessToken(Long userId) {
+    public String createAccessToken(String userEmail) {
         log.info("createAccessToken 시작");
         // JWT payload 에 저장되는 정보단위, 보통 여기서 user를 식별하는 값을 넣는다.
-        Claims claims = Jwts.claims().setSubject(userId.toString());
+        Claims claims = Jwts.claims().setSubject(userEmail);
 
         Date now = new Date();
         return Jwts.builder()
@@ -46,9 +52,9 @@ public class JwtTokenProvider {
     }
 
 
-    public String createRefreshToken(Long userId) {
+    public String createRefreshToken(String userEmail) {
         log.info("createRefreshToken 시작");
-        Claims claims = Jwts.claims().setSubject(userId.toString());
+        Claims claims = Jwts.claims().setSubject(userEmail);
 
         Date now = new Date();
         return Jwts.builder()
@@ -57,11 +63,6 @@ public class JwtTokenProvider {
                 .setExpiration(new Date(now.getTime() + JWTConstants.REFRESH_TOKEN_EXPIRED))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
-    }
-
-    public String getUserIdFromRef(String token) {
-        return Jwts.parserBuilder().setSigningKey(key).build()
-                .parseClaimsJws(token).getBody().getSubject();
     }
 
     // accessToken 남은 유효시간
@@ -74,4 +75,37 @@ public class JwtTokenProvider {
     }
 
 
+    // 토큰 유효성 검사
+    public boolean validateToken(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+            log.info("claims = {}", claims.getSubject());
+            return true;
+        } catch (ExpiredJwtException e) {
+            // 만료된 경우에는 refresh token을 확인하기 위해
+            throw e;
+        } catch (JwtException | IllegalArgumentException e) {
+            throw e;
+        }
+    }
+
+    /**
+     * 토큰으로 부터 Authentication 객체를 얻어온다.
+     * Authentication 안에 user의 정보가 담겨있음.
+     * UsernamePasswordAuthenticationToken 객체로 Authentication을 쉽게 만들수 있으며,
+     * 매게변수로 UserDetails, pw, authorities 까지 넣어주면
+     * setAuthenticated(true)로 인스턴스를 생성해주고
+     * Spring-Security는 그것을 체크해서 로그인을 처리함
+     */
+    public Authentication getAuthentication(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        // userEmail, Password, Role을 이용해 만든 userDetails
+        UserDetails userDetails = myUserDetailsService.loadUserByUsername(claims.getSubject());
+        return new UsernamePasswordAuthenticationToken(userDetails, token, userDetails.getAuthorities());
+    }
 }

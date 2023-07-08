@@ -20,14 +20,15 @@ import java.util.Collections;
 
 @Slf4j
 @RequiredArgsConstructor
-@Service
+//@Service
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
     private final UserRepository userRepository;
     private final HttpSession httpSession;
 
     /**
-     * 소셜 서비스 서버(리소스 서버)에서 사용자 정보 가져온 상태에서
-     * 추가로 진행하려는 Service
+     * Session 기반
+     * - 소셜 서비스 서버(리소스 서버)에서 사용자 정보 가져온 상태에서
+     *  추가로 진행하려는 Service
      */
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {

@@ -22,7 +22,7 @@ import java.util.Map;
 public class PrincipalOAuth2DetailsService extends DefaultOAuth2UserService {
 
     private final UserService userService;
-//    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
     /**
      * 소셜 서비스 서버(리소스 서버)에서 사용자 정보 가져온 상태에서
      * 추가로 진행하려는 Service
@@ -58,7 +58,7 @@ public class PrincipalOAuth2DetailsService extends DefaultOAuth2UserService {
                 .email(email)
                 .role(Role.USER)
                 .name(email.split("@")[0])
-//                .password(passwordEncoder.encode(email)) // password는 email encode
+                .password(passwordEncoder.encode(email)) // password는 email encode
                 .provider(userRequest.getClientRegistration().getRegistrationId())
                 .provider_id(oAuth2User.getAttribute("sub").toString())
                 .build();

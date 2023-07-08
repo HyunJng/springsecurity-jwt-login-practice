@@ -19,4 +19,8 @@ public class AuthController {
         return new BaseResponse<>(postLoginRes);
     }
 
+    @GetMapping("/test")
+    public String test() {
+        return "테스트 성공";
+    }
 }
